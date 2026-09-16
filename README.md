@@ -1,11 +1,5 @@
 # Proposta de Projeto: HOEF Synth
 
-**Instituição:** Universidade Tecnológica Federal do Paraná (UTFPR)
-**Programa:** Graduação em Engenharia da Computação
-**Autores:** Brenno Przybylski, Murilo Ciesla Felicio, Ricardo Bruno Bentin Reyes, Thiago Lucas de Lima
-**Orientador:** Prof. Dr. Cesar Manuel Vargas Benítez
-**Local/Ano:** Curitiba, 2026
-
 ---
 
 ## 1. O que é o projeto
@@ -90,5 +84,3 @@ Regula a amplitude do sinal elétrico/áudio recebido, permitindo aumento de amp
   Av(dB) = 20·log(V/V) *(conforme aplicado, resultando em ≈3,61dB / ≈1,515 vezes de amplificação)*
 
 ---
-
-*Documento gerado a partir do relatório "HOEF Synth" (Universidade Tecnológica Federal do Paraná, Curitiba, 2026).*
