@@ -2,7 +2,7 @@
 
 ---
 
-## 1. O que é o projeto
+## 1. O projeto
 
 O HOEF Synth é um sintetizador modular no formato **Eurorack**, combinando módulos analógicos com um módulo digital construído em torno de um microcontrolador **ESP32**. O Eurorack é o formato dominante para sintetizadores modulares, definindo especificações de hardware, elétrica e interfaces, e se diferencia de um sintetizador tradicional (com fluxo de sinal fixo em placa fechada) por ser composto de módulos independentes que podem ser conectados de formas variadas, permitindo diferentes combinações de notas, tons, batidas e melodias.
 
@@ -25,7 +25,7 @@ Prover módulos de Eurorack de custo reduzido em comparação a produtos importa
 O projeto é composto por 4 módulos principais:
 
 ### 4.1 Sequencer Digital
-Módulo construído com um microcontrolador **ESP32 CP2102**, 9 encoders rotativos e saídas padrão P2, além de uma fonte de alimentação.
+Módulo construído com um microcontrolador **ESP32**, 9 encoders rotativos e saídas padrão P2, além de uma fonte de alimentação.
 - **8 encoders** controlam o nível de tensão gerado a cada instante (correspondente a um semitom).
 - **1 encoder** controla o BPM (batidas por minuto) do sinal gerado.
 
@@ -34,6 +34,7 @@ Módulo construído com um microcontrolador **ESP32 CP2102**, 9 encoders rotativ
 - **Gate:** sinal digital periódico relacionado ao valor do step atual — alto (3,3V) quando o step é diferente de zero, baixo (0V) caso contrário.
 - **CvOUT:** saída analógica que representa a tensão correspondente a cada passo (step) de uma sequência de 8 posições, atualizada a cada ciclo de Clock. Cada posição armazena um valor de 0 a 12, convertido em um nível de tensão entre 0V e 3,3V pelo pino DAC.
   - Exemplo dado no relatório: um arpejo do acorde Am7 (lá, dó, mi, sol, lá, dó, mi, sol) representado pelo vetor [1, 4, 8, 11, 1, 4, 8, 11] geraria as tensões 0,25V, 1V, 2V, 2,75V, 0,25V, 1V, 2V, 2,75V.
+- **LCD:** Visualização de formato da saída e step atual em display LCD.
 
 Todas as saídas passam por um amplificador operacional **TL072**, que amplifica o sinal em aproximadamente 3,61dB (≈1,515 vezes), necessário pois a saída máxima do ESP32 é 3,3V enquanto o padrão Eurorack adotado no projeto é de 5V.
 
