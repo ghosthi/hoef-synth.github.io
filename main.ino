@@ -1,102 +1,136 @@
 #include <TFT_eSPI.h>
 #include <SPI.h>
 #include <Arduino.h>
+#include "dac.h"
+#include "mux.h"
+#include "lcd.h"
 
-TFT_eSPI tft = TFT_eSPI();
+const int PIN_CLOCK = 26; // Clock
+const int PIN_GATE = 27;  // Gate
 
-//definicao de pinos:
-const int PIN_DAC_CV = 25;   // Saída CV
-const int PIN_CLOCK = 26;    // Clock
-const int PIN_GATE = 27;     // Gate
-
-//variaveis globais
-volatile uint8_t steps[8] = {0, 1, 2, 3, 4, 5, 6, 7};
-volatile uint16_t BPM = 300;
-
+const int NUM_STEPS = get_num_steps();
+long steps[NUM_STEPS] = {0};
+int current_step = 0;
+bool halfBeat = false;
 
 // Handlers para referência das tarefas
 TaskHandle_t entrada;
 TaskHandle_t saida;
 
-//funçao p converter de int pro valor de saida do DAC
-float outputVoltage(uint8_t stepInt){
-  return (stepInt * 0,275);
-}
+hw_timer_t *timer = NULL;
 
 // Código executado pelo Núcleo 1
-void output_task(void * pvParameters) {
-  while(true) {
-    //colocando os steps na tela
-    tft.drawNumber(steps[0], 12, 5, 2);
-    tft.drawNumber(steps[1], 30, 5, 2);
-    tft.drawNumber(steps[2], 48, 5, 2);
-    tft.drawNumber(steps[3], 66, 5, 2);
-    tft.drawNumber(steps[4], 84, 5, 2);
-    tft.drawNumber(steps[5], 102, 5, 2);
-    tft.drawNumber(steps[6], 120, 5, 2);
-    tft.drawNumber(steps[7], 138, 5, 2);
-    
-    //colocando o BPM na tela
-    tft.drawString("BPM : ", 12, 40, 4);
-    tft.drawNumber(BPM, 90, 40, 4);
+void output_task(void *pvParameters)
+{
+  int bpm = get_bpm();
+  int loop_bpm = bpm;
+  while (true)
+  {
+    loop_bpm = get_bpm();
+    get_steps(steps); // seta os steps por referencia
 
+    if (loop_bpm != bpm)
+    {
+      bpm = loop_bpm;
 
-    //aqui vao as partes da saída dos pinos clock, cvout e gate
-    //dac.setVoltage(outputVoltage(steps[1]));
+      uint64_t usPorBatida = 60000000ULL / bpm;
+      uint64_t usPorMeioBeat = usPorBatida / 2;
 
-
+      timerAlarm(timer, usPorMeioBeat, true, 0);
+    }
+    lcd_output(steps, bpm);
     vTaskDelay(100 / portTICK_PERIOD_MS); // Pausa de 0,1 segundo
   }
 }
 
+void IRAM_ATTR outputDacClockGate()
+{
+  if (!halfBeat)
+  {
+    uint8_t step = current_step;
+
+    dac_output(step_to_volt(steps[step]));
+
+    digitalWrite(PIN_CLOCK, HIGH);
+
+    if (encoder_enabled(current_step))
+    {
+      digitalWrite(PIN_GATE, HIGH);
+    }
+    else
+    {
+      digitalWrite(PIN_GATE, LOW);
+    }
+
+    halfBeat = true;
+  }
+  else
+  {
+    digitalWrite(PIN_CLOCK, LOW);
+    digitalWrite(PIN_GATE, LOW);
+
+    current_step = (current_step + 1) % NUM_STEPS;
+
+    halfBeat = false;
+  }
+}
+
 // Código executado pelo Núcleo 0
-void input_task(void * pvParameters) {
-  true(true) {
-    Serial.print("Tarefa 2 executando no núcleo: ");
-    Serial.println(xPortGetCoreID());
-    
+void input_task(void *pvParameters)
+{
+  while (true)
+  {
+    update_encoder_values();
     vTaskDelay(500 / portTICK_PERIOD_MS); // Pausa de 0.5 segundo
   }
 }
 
-
-
-
-
-void setup() {
+void setup()
+{
   Serial.begin(115200);
 
-  // setando o LCD
-  tft.init();
-  tft.setRotation(1);
-  tft.fillScreen(0x188B);
-  tft.setTextColor(0xFF40, 0x188B);
+  lcd_setup();
+  mux_setup();
+  dac_setup();
+
+  pinMode(PIN_CLOCK, OUTPUT);
+  pinMode(PIN_GATE, OUTPUT);
+  digitalWrite(PIN_CLOCK, LOW);
+  digitalWrite(PIN_GATE, LOW);
+
+  timer = timerBegin(1000000);
+  timerAttachInterrupt(timer, &outputDacClockGate);
+  uint64_t usPorBatida = 60000000ULL / get_bpm();
+  uint64_t usPorMeioBeat = usPorBatida / 2;
+
+  timerAlarm(timer, usPorMeioBeat, true, 0);
 
   // Cria a tarefa fixada no Núcleo 0
   xTaskCreatePinnedToCore(
-    input_task,     /* Função que implementa a tarefa */
-    "Task0",         /* Nome da tarefa */
-    20000,           /* Tamanho da pilha (stack size em bytes) */
-    NULL,            /* Parâmetro passado para a função */
-    1,               /* Prioridade da tarefa (0 é a menor) */
-    &entrada,        /* 3. CORRIGIDO: Passando o Handle da tarefa, não a função */
-    1                /* Núcleo onde a tarefa será executada (0) */
+      input_task, /* Função que implementa a tarefa */
+      "input",    /* Nome da tarefa */
+      20000,      /* Tamanho da pilha (stack size em bytes) */
+      NULL,       /* Parâmetro passado para a função */
+      1,          /* Prioridade da tarefa (0 é a menor) */
+      &entrada,   /* 3. CORRIGIDO: Passando o Handle da tarefa, não a função */
+      1           /* Núcleo onde a tarefa será executada (0) */
   );
 
   // Cria a tarefa fixada no Núcleo 1
   xTaskCreatePinnedToCore(
-    output_task,     /* Função que implementa a tarefa */
-    "saidas",        /* Nome da tarefa */
-    20000,           /* Tamanho da pilha */
-    NULL,            /* Parâmetro passado para a função */
-    1,               /* Prioridade da tarefa */
-    &saida,          /* 3. CORRIGIDO: Passando o Handle da tarefa, não a função */
-    0                /* Núcleo onde a tarefa será executada (1) */
+      output_task, /* Função que implementa a tarefa */
+      "output",    /* Nome da tarefa */
+      20000,       /* Tamanho da pilha */
+      NULL,        /* Parâmetro passado para a função */
+      1,           /* Prioridade da tarefa */
+      &saida,      /* 3. CORRIGIDO: Passando o Handle da tarefa, não a função */
+      0            /* Núcleo onde a tarefa será executada (1) */
   );
 }
 
-void loop() {
+void loop()
+{
   // Como as tarefas acima rodam em loops infinitos próprios,
   // a tarefa do loop() principal pode ser deletada para liberar memória.
   vTaskDelete(NULL);
- }
+}
