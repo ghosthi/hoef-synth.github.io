@@ -1,0 +1,1 @@
+wokwi-cli ./wokwi/ --serial-log-file simulation.log

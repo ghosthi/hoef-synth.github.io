@@ -1,0 +1,809 @@
+{
+  "version": 1,
+  "author": "Anonymous maker",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "board-esp32-devkit-c-v4",
+      "id": "esp",
+      "top": -96,
+      "left": 4.84,
+      "attrs": {}
+    },
+    {
+      "type": "chip-mcp4725",
+      "id": "chip1",
+      "top": 10.62,
+      "left": -168,
+      "attrs": {
+        "address": "0x62"
+      }
+    },
+    {
+      "type": "chip-pcf8575-mux-20",
+      "id": "chip2",
+      "top": 77.82,
+      "left": -686.4,
+      "attrs": {
+        "address": "0x20"
+      }
+    },
+    {
+      "type": "chip-pcf8575-mux-21",
+      "id": "chip3",
+      "top": -219.78,
+      "left": -676.8,
+      "attrs": {
+        "address": "0x21"
+      }
+    },
+    {
+      "type": "wokwi-ky-040",
+      "id": "encoder1",
+      "top": -295.9,
+      "left": -884,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-ky-040",
+      "id": "encoder2",
+      "top": -209.5,
+      "left": -884,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-ky-040",
+      "id": "encoder3",
+      "top": -113.5,
+      "left": -884,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-ky-040",
+      "id": "encoder4",
+      "top": -27.1,
+      "left": -884,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-ky-040",
+      "id": "encoder5",
+      "top": -276.7,
+      "left": -490.4,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-ky-040",
+      "id": "encoder6",
+      "top": 107.3,
+      "left": -1114.4,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-ky-040",
+      "id": "encoder7",
+      "top": 193.7,
+      "left": -1124,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-ky-040",
+      "id": "encoder8",
+      "top": 289.7,
+      "left": -1124,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-ky-040",
+      "id": "encoder9",
+      "top": 395.3,
+      "left": -1114.4,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-gnd",
+      "id": "gnd1",
+      "top": 144,
+      "left": -471,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-gnd",
+      "id": "gnd2",
+      "top": -86.4,
+      "left": -490.2,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led1",
+      "top": 130.8,
+      "left": -34.6,
+      "attrs": {
+        "color": "red"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r1",
+      "top": 167.15,
+      "left": -115.2,
+      "attrs": {
+        "value": "1000"
+      }
+    },
+    {
+      "type": "wokwi-gnd",
+      "id": "gnd3",
+      "top": 182.4,
+      "left": 37.8,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-ili9341",
+      "id": "lcd1",
+      "top": -181.6,
+      "left": 412.5,
+      "attrs": {}
+    }
+  ],
+  "connections": [
+    [
+      "esp:TX",
+      "$serialMonitor:RX",
+      "",
+      []
+    ],
+    [
+      "esp:RX",
+      "$serialMonitor:TX",
+      "",
+      []
+    ],
+    [
+      "chip1:VCC",
+      "esp:3V3",
+      "red",
+      [
+        "h-38.4",
+        "v-86.4",
+        "h211.05"
+      ]
+    ],
+    [
+      "esp:GND.1",
+      "chip1:GND",
+      "black",
+      [
+        "h-211.05",
+        "v-28.8"
+      ]
+    ],
+    [
+      "chip1:SDA",
+      "esp:21",
+      "green",
+      [
+        "h21.01",
+        "v-182.4",
+        "h163.2",
+        "v124.8"
+      ]
+    ],
+    [
+      "chip1:SCL",
+      "esp:22",
+      "green",
+      [
+        "v86.4",
+        "h105.6",
+        "h201.6",
+        "v-172.8"
+      ]
+    ],
+    [
+      "chip2:VCC",
+      "esp:3V3",
+      "red",
+      [
+        "h-9.6",
+        "v-19.2",
+        "h451.2",
+        "v-134.4"
+      ]
+    ],
+    [
+      "esp:GND.1",
+      "chip2:GND",
+      "black",
+      [
+        "h-307.05",
+        "v-9.6",
+        "h-384"
+      ]
+    ],
+    [
+      "esp:21",
+      "chip2:SDA",
+      "green",
+      [
+        "h48",
+        "v-172.8",
+        "h-259.2",
+        "v96",
+        "h-172.8",
+        "v163.2",
+        "h-441.6",
+        "v48"
+      ]
+    ],
+    [
+      "esp:22",
+      "chip2:SCL",
+      "green",
+      [
+        "h67.2",
+        "v-38.4",
+        "h-460.8",
+        "v163.2",
+        "h-422.4",
+        "v28.8"
+      ]
+    ],
+    [
+      "chip2:VCC",
+      "chip3:VCC",
+      "red",
+      [
+        "h-192",
+        "v-9.6",
+        "h-134.4"
+      ]
+    ],
+    [
+      "chip2:GND",
+      "chip3:GND",
+      "black",
+      [
+        "h-163.2",
+        "v-38.4",
+        "h-172.8",
+        "v-9.6",
+        "h-67.2",
+        "v-249.6"
+      ]
+    ],
+    [
+      "chip3:SDA",
+      "esp:21",
+      "green",
+      [
+        "h-19.2",
+        "v-124.8",
+        "h672",
+        "v374.4"
+      ]
+    ],
+    [
+      "esp:22",
+      "chip3:SCL",
+      "green",
+      [
+        "h115.2",
+        "v-364.8",
+        "h-720",
+        "v172.8",
+        "h-182.4",
+        "v48"
+      ]
+    ],
+    [
+      "encoder1:CLK",
+      "chip3:P00",
+      "green",
+      [
+        "h57.6",
+        "v124.8"
+      ]
+    ],
+    [
+      "chip3:P01",
+      "encoder1:DT",
+      "green",
+      [
+        "h-144",
+        "v-38.4"
+      ]
+    ],
+    [
+      "encoder1:VCC",
+      "chip3:VCC",
+      "red",
+      [
+        "h48",
+        "v48.4"
+      ]
+    ],
+    [
+      "encoder1:GND",
+      "chip3:GND",
+      "black",
+      [
+        "h38.4",
+        "v-56.8"
+      ]
+    ],
+    [
+      "encoder2:CLK",
+      "chip3:P02",
+      "green",
+      [
+        "h48",
+        "v57.6"
+      ]
+    ],
+    [
+      "chip3:P03",
+      "encoder2:DT",
+      "green",
+      [
+        "h-134.4",
+        "v19.2"
+      ]
+    ],
+    [
+      "encoder2:GND",
+      "encoder1:GND",
+      "black",
+      [
+        "h-19.2",
+        "v-85.6"
+      ]
+    ],
+    [
+      "encoder2:VCC",
+      "encoder1:VCC",
+      "red",
+      [
+        "h-28.8",
+        "v-86"
+      ]
+    ],
+    [
+      "encoder3:GND",
+      "encoder2:GND",
+      "black",
+      [
+        "h-38.4",
+        "v-104.8"
+      ]
+    ],
+    [
+      "encoder3:VCC",
+      "encoder2:VCC",
+      "red",
+      [
+        "h-48",
+        "v-95.6"
+      ]
+    ],
+    [
+      "chip3:P04",
+      "encoder3:CLK",
+      "green",
+      [
+        "h-124.8",
+        "v115.2"
+      ]
+    ],
+    [
+      "chip3:P05",
+      "encoder3:DT",
+      "green",
+      [
+        "v19.2",
+        "h-218.99",
+        "v96"
+      ]
+    ],
+    [
+      "chip3:P06",
+      "encoder4:CLK",
+      "green",
+      [
+        "h11.41",
+        "v172.8"
+      ]
+    ],
+    [
+      "encoder4:DT",
+      "chip3:P07",
+      "green",
+      [
+        "h220.8",
+        "v-134.3"
+      ]
+    ],
+    [
+      "encoder4:GND",
+      "encoder3:GND",
+      "black",
+      [
+        "h-38.4",
+        "v-85.6"
+      ]
+    ],
+    [
+      "encoder4:VCC",
+      "encoder3:VCC",
+      "red",
+      [
+        "h-19.2",
+        "v-76.4"
+      ]
+    ],
+    [
+      "chip3:P10",
+      "encoder5:CLK",
+      "green",
+      [
+        "h232.21",
+        "v-115.2"
+      ]
+    ],
+    [
+      "encoder5:DT",
+      "chip3:P11",
+      "green",
+      [
+        "h19.2",
+        "v96.1"
+      ]
+    ],
+    [
+      "encoder1:GND",
+      "encoder5:GND",
+      "black",
+      [
+        "h0",
+        "v-114.4",
+        "h374.4",
+        "v124.8"
+      ]
+    ],
+    [
+      "encoder5:VCC",
+      "encoder1:VCC",
+      "red",
+      [
+        "h-249.6",
+        "v-28.4",
+        "h-182.4"
+      ]
+    ],
+    [
+      "chip3:P12",
+      "encoder1:SW",
+      "green",
+      [
+        "h30.61",
+        "v-115.2"
+      ]
+    ],
+    [
+      "chip3:P13",
+      "encoder2:SW",
+      "green",
+      [
+        "h-180.59",
+        "v-19.2"
+      ]
+    ],
+    [
+      "encoder3:SW",
+      "chip3:P14",
+      "green",
+      [
+        "h182.4",
+        "v-86.3"
+      ]
+    ],
+    [
+      "chip3:P15",
+      "encoder4:SW",
+      "green",
+      [
+        "h30.61",
+        "v172.8",
+        "h0",
+        "v9.6"
+      ]
+    ],
+    [
+      "chip3:P16",
+      "encoder5:SW",
+      "green",
+      [
+        "h203.41",
+        "v-57.6"
+      ]
+    ],
+    [
+      "chip2:P00",
+      "encoder6:CLK",
+      "green",
+      [
+        "h-288",
+        "v-19.2"
+      ]
+    ],
+    [
+      "encoder6:DT",
+      "chip2:P01",
+      "green",
+      [
+        "h297.6",
+        "v19.3"
+      ]
+    ],
+    [
+      "chip2:P02",
+      "encoder7:CLK",
+      "green",
+      [
+        "h-28.8",
+        "v38.4"
+      ]
+    ],
+    [
+      "encoder7:DT",
+      "chip2:P03",
+      "green",
+      [
+        "h307.2",
+        "v-47.9"
+      ]
+    ],
+    [
+      "chip2:P04",
+      "encoder8:CLK",
+      "green",
+      [
+        "h-9.6",
+        "v76.8"
+      ]
+    ],
+    [
+      "encoder8:DT",
+      "chip2:P05",
+      "green",
+      [
+        "h0"
+      ]
+    ],
+    [
+      "chip2:P06",
+      "encoder9:CLK",
+      "green",
+      [
+        "v0"
+      ]
+    ],
+    [
+      "encoder9:DT",
+      "chip2:P07",
+      "green",
+      [
+        "h432",
+        "v-239.9"
+      ]
+    ],
+    [
+      "chip2:P10",
+      "encoder6:SW",
+      "green",
+      [
+        "h-401.39",
+        "v-28.8"
+      ]
+    ],
+    [
+      "encoder7:SW",
+      "chip2:P11",
+      "green",
+      [
+        "h451.2",
+        "v-67.1"
+      ]
+    ],
+    [
+      "chip2:P12",
+      "encoder8:SW",
+      "green",
+      [
+        "h30.61",
+        "v182.4"
+      ]
+    ],
+    [
+      "encoder9:SW",
+      "chip2:P13",
+      "green",
+      [
+        "h460.8",
+        "v-287.9"
+      ]
+    ],
+    [
+      "chip2:P14",
+      "gnd1:GND",
+      "green",
+      [
+        "h0"
+      ]
+    ],
+    [
+      "chip2:P15",
+      "gnd1:GND",
+      "green",
+      [
+        "h0"
+      ]
+    ],
+    [
+      "chip2:P16",
+      "gnd1:GND",
+      "green",
+      [
+        "h0"
+      ]
+    ],
+    [
+      "chip2:P17",
+      "gnd1:GND",
+      "green",
+      [
+        "h0"
+      ]
+    ],
+    [
+      "chip3:P17",
+      "gnd2:GND",
+      "green",
+      [
+        "h0"
+      ]
+    ],
+    [
+      "esp:34",
+      "chip2:INT",
+      "green",
+      [
+        "h-479.85",
+        "v57.6",
+        "h-278.4",
+        "v86.4"
+      ]
+    ],
+    [
+      "chip3:INT",
+      "esp:34",
+      "green",
+      [
+        "h-19.2",
+        "v220.8"
+      ]
+    ],
+    [
+      "led1:C",
+      "r1:2",
+      "green",
+      [
+        "v0"
+      ]
+    ],
+    [
+      "r1:1",
+      "chip1:VOUT",
+      "green",
+      [
+        "v-182.4",
+        "h48"
+      ]
+    ],
+    [
+      "led1:A",
+      "gnd3:GND",
+      "green",
+      [
+        "v0"
+      ]
+    ],
+    [
+      "esp:GND.1",
+      "gnd3:GND",
+      "black",
+      [
+        "h-9.45",
+        "v115.2",
+        "h48"
+      ]
+    ],
+    [
+      "lcd1:VCC",
+      "esp:3V3",
+      "red",
+      [
+        "v9.6",
+        "h-374.4",
+        "v-201.6"
+      ]
+    ],
+    [
+      "lcd1:GND",
+      "gnd3:GND",
+      "black",
+      [
+        "v0"
+      ]
+    ],
+    [
+      "esp:5",
+      "lcd1:CS",
+      "green",
+      [
+        "h0"
+      ]
+    ],
+    [
+      "esp:4",
+      "lcd1:RST",
+      "green",
+      [
+        "h0"
+      ]
+    ],
+    [
+      "lcd1:D/C",
+      "esp:2",
+      "green",
+      [
+        "v0"
+      ]
+    ],
+    [
+      "lcd1:MOSI",
+      "esp:23",
+      "green",
+      [
+        "v0"
+      ]
+    ],
+    [
+      "lcd1:SCK",
+      "esp:18",
+      "green",
+      [
+        "v0"
+      ]
+    ],
+    [
+      "lcd1:MISO",
+      "esp:19",
+      "green",
+      [
+        "v0"
+      ]
+    ],
+    [
+      "lcd1:LED",
+      "lcd1:VCC",
+      "green",
+      [
+        "v19.2",
+        "h-67.21"
+      ]
+    ]
+  ],
+  "dependencies": {}
+}

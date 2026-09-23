@@ -1,5 +1,7 @@
+#include <Arduino.h>
 #include <Wire.h>
 #include <Adafruit_MCP4725.h>
+#include <math.h>
 // resolução no define pode ter valores 5, 6, 7, 8 ou
 //      corresponde aos limites de valores 2^DAC_RESOLUTION
 #define DAC_RESOLUTION (8)
@@ -26,13 +28,15 @@ uint16_t volts_to_dac_output(float volts)
 
 void dac_output(float volts)
 {
-    valor = volts_to_dac_output(volts);
-    if (valor > 2 ^ DAC_RESOLUTION)
+    uint16_t valor = volts_to_dac_output(volts);
+    if (valor > pow(2, DAC_RESOLUTION))
     {
-        Serial.println(
-            "Valor maior que o suportado "
-            "para a resolucao de " STR(DAC_RESOLUTION) "!");
+        Serial.print("Valor (");
+        Serial.print(valor);
+        Serial.print(") maior que o suportado para a resolucao de ");
+        Serial.print(DAC_RESOLUTION);
+        Serial.println("!");
         valor = 0;
     }
-    dac.setVoltage(valor)
+    dac.setVoltage((uint16_t)valor, true);
 }

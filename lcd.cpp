@@ -1,12 +1,13 @@
-#include <TFT_eSPI.h>
+
+#include "TFT_eSPI.h"
 #include <SPI.h>
 #include <Arduino.h>
 
 TFT_eSPI tft = TFT_eSPI();
 
-void lcd_output(long steps, int bpm)
+void lcd_output(long steps[], int bpm, int num_steps)
 {
-    for (size_t i = 0; i < steps.size(); i++)
+    for (size_t i = 0; i < num_steps; i++)
     {
         tft.drawNumber(steps[0], 12 + (18 * i), 5, 2);
     }

@@ -1,0 +1,17 @@
+[wokwi]
+version = 1
+firmware = '../build/hoef-synth.github.io.ino.bin'
+elf = '../build/hoef-synth.github.io.ino.elf'
+vcdFile = 'logic-capture.vcd'
+
+[[chip]]
+name = 'mcp4725'
+binary = 'mcp4725.chip.wasm'
+
+[[chip]]
+name = 'pcf8575-mux-20'
+binary = 'pcf8575-mux-20.chip.wasm'
+
+[[chip]]
+name = 'pcf8575-mux-21'
+binary = 'pcf8575-mux-21.chip.wasm'

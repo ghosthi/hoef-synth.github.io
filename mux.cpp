@@ -1,5 +1,4 @@
 #include <Arduino.h>
-#include <Wire.h>
 #include "PCF8575.h"
 
 #define NUM_EXPANDERS 2
@@ -63,8 +62,6 @@ void mux_setup()
     Serial.print("Número de encoders inconsistente");
     exit(1);
   }
-  Wire.begin();
-  Wire.setClock(400000);
 
   for (int i = 0; i < NUM_EXPANDERS; i++)
   {

@@ -1,17 +1,27 @@
-#include <TFT_eSPI.h>
-#include <SPI.h>
+// padrao
 #include <Arduino.h>
+#include <Wire.h>
+#include <SPI.h>
+#include <vector>
+// instaladas
+#include "PCF8575.h"
+#include "TFT_eSPI.h"
+#include "Adafruit_MCP4725.h"
+// proprias
 #include "dac.h"
 #include "mux.h"
 #include "lcd.h"
 
+const int MAX_STEPS = 16;
 const int PIN_CLOCK = 26; // Clock
 const int PIN_GATE = 27;  // Gate
 
-const int NUM_STEPS = get_num_steps();
-long steps[NUM_STEPS] = {0};
+int NUM_STEPS = get_num_steps();
+long steps[MAX_STEPS] = {0};
 int current_step = 0;
 bool halfBeat = false;
+
+volatile bool dacUpdate = false;
 
 // Handlers para referência das tarefas
 TaskHandle_t entrada;
@@ -29,6 +39,12 @@ void output_task(void *pvParameters)
     loop_bpm = get_bpm();
     get_steps(steps); // seta os steps por referencia
 
+    if (dacUpdate)
+    {
+      dacUpdate = false;
+      dac_output(step_to_volt(steps[current_step]));
+    }
+
     if (loop_bpm != bpm)
     {
       bpm = loop_bpm;
@@ -38,8 +54,8 @@ void output_task(void *pvParameters)
 
       timerAlarm(timer, usPorMeioBeat, true, 0);
     }
-    lcd_output(steps, bpm);
-    vTaskDelay(100 / portTICK_PERIOD_MS); // Pausa de 0,1 segundo
+    lcd_output(steps, bpm, NUM_STEPS);
+    vTaskDelay(10 / portTICK_PERIOD_MS); // Pausa de 0,1 segundo
   }
 }
 
@@ -48,8 +64,7 @@ void IRAM_ATTR outputDacClockGate()
   if (!halfBeat)
   {
     uint8_t step = current_step;
-
-    dac_output(step_to_volt(steps[step]));
+    dacUpdate = true;
 
     digitalWrite(PIN_CLOCK, HIGH);
 
@@ -81,13 +96,15 @@ void input_task(void *pvParameters)
   while (true)
   {
     update_encoder_values();
-    vTaskDelay(500 / portTICK_PERIOD_MS); // Pausa de 0.5 segundo
+    vTaskDelay(10 / portTICK_PERIOD_MS); // Pausa de 0.5 segundo
   }
 }
 
 void setup()
 {
   Serial.begin(115200);
+  Wire.begin(21, 22);
+  Wire.setClock(400000);
 
   lcd_setup();
   mux_setup();
@@ -113,7 +130,7 @@ void setup()
       NULL,       /* Parâmetro passado para a função */
       1,          /* Prioridade da tarefa (0 é a menor) */
       &entrada,   /* 3. CORRIGIDO: Passando o Handle da tarefa, não a função */
-      1           /* Núcleo onde a tarefa será executada (0) */
+      0           /* Núcleo onde a tarefa será executada (0) */
   );
 
   // Cria a tarefa fixada no Núcleo 1
@@ -124,7 +141,7 @@ void setup()
       NULL,        /* Parâmetro passado para a função */
       1,           /* Prioridade da tarefa */
       &saida,      /* 3. CORRIGIDO: Passando o Handle da tarefa, não a função */
-      0            /* Núcleo onde a tarefa será executada (1) */
+      1            /* Núcleo onde a tarefa será executada (1) */
   );
 }
 

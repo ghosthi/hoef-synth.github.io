@@ -1,0 +1,11 @@
+{
+  "name": "MCP4725",
+  "author": "Thiago",
+  "pins": [
+    "VCC",
+    "GND",
+    "SCL",
+    "SDA",
+    "VOUT"
+  ]
+}
