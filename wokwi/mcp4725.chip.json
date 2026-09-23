@@ -1,11 +1,12 @@
 {
-  "name": "MCP4725",
-  "author": "Thiago",
+  "name": "mcp4725",
+  "author": "QMS Instrument Control",
   "pins": [
     "VCC",
     "GND",
-    "SCL",
     "SDA",
+    "SCL",
     "VOUT"
-  ]
+  ],
+  "controls": []
 }

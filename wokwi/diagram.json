@@ -676,7 +676,7 @@
     ],
     [
       "esp:34",
-      "chip2:INT",
+      "chip2:nINT",
       "green",
       [
         "h-479.85",
@@ -686,7 +686,7 @@
       ]
     ],
     [
-      "chip3:INT",
+      "chip3:nINT",
       "esp:34",
       "green",
       [

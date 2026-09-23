@@ -1,325 +1,291 @@
+// Wokwi Custom Chip - For docs and examples see:
+// https://docs.wokwi.com/chips-api/getting-started
+//
+// SPDX-License-Identifier: MIT
+// Copyright 2023 HENDRIK JOHANNES Henning
+
 #include "wokwi-api.h"
 #include <stdio.h>
-#include <stdint.h>
 #include <stdlib.h>
 
-#define PCF8575_ADDRESS 0x20
+#define I2C_BASE_ADDRESS 0x20
+#define NUM_GPIO 16
+#define NUM_ADDR_BITS 3
 
-typedef struct {
-  i2c_dev_t i2c;
+#define CHIPSTATE_FROM(usr_dat) chip_state_t *chip = (chip_state_t *)usr_dat
 
-  pin_t pins[16];
-  pin_t int_pin;
+typedef struct
+{
+  // TODO: Put your chip variables here
 
-  /*
-   * PCF8575 port latch.
-   *
-   * 1 = input/released
-   * 0 = output LOW
-   */
-  uint16_t latch;
+  // address bit pinss and device address
+  uint8_t address;
+  pin_t addressBits[NUM_ADDR_BITS];
 
-  /*
-   * Number of bytes received during
-   * current I2C write transaction.
-   */
-  uint8_t write_pos;
+  // interupt and "bidir" i/o pins
+  pin_t nINT;
+  pin_t io[NUM_GPIO];
+
+  // input configuration and read value
+  uint16_t inputMask;
+  uint16_t inputValue;
+  uint16_t lastReadValue;
+
+  // i2c configuration, device and
+  // byte count/port count tracking
+  i2c_dev_t i2c_dev;
+  i2c_config_t i2c_config;
+  uint8_t i2c_portcount;
+
+  pin_watch_config_t io_watch_config;
 
 } chip_state_t;
 
-
-static chip_state_t chip;
-
-
-/*
- * Apply the latch configuration to
- * the physical simulation pins.
- */
-static void update_pins(void)
+/* Interrupt flag control
+  Note: inverted logic, i.e. when interrupt is asserted
+  the open-drain output is a switch tiede to ground,
+  otherwise, it is left floating (input)
+*/
+void interruptFlagOff(chip_state_t *chip)
 {
-  for (int i = 0; i < 16; i++) {
+  pin_mode(chip->nINT, INPUT); // floating
+}
 
-    if (chip.latch & (1 << i)) {
+void interruptFlagOn(chip_state_t *chip)
+{
+  pin_mode(chip->nINT, OUTPUT_LOW);
+  printf("INT flag SET\n");
+}
 
-      /*
-       * HIGH on PCF8575 means the pin
-       * is released and can be used as input.
-       */
-      pin_mode(
-        chip.pins[i],
-        INPUT_PULLUP
-      );
+void incrementPortCount(chip_state_t *chip)
+{
+  if (chip->i2c_portcount)
+  {
+    // already 1, loop back to zero
+    chip->i2c_portcount = 0;
+  }
+  else
+  {
+    chip->i2c_portcount = 1;
+  }
+}
 
-    } else {
+bool on_i2c_connect(void *user_data, uint32_t address, bool read)
+{
+  // `address` parameter contains the 7-bit address that was received on the I2C bus.
+  // `read` indicates whether this is a read request (true) or write request (false).
+  CHIPSTATE_FROM(user_data);
 
-      /*
-       * LOW means the PCF8575 actively
-       * drives the pin LOW.
-       */
-      pin_mode(
-        chip.pins[i],
-        OUTPUT_LOW
-      );
+  if (address != chip->address)
+  {
+    printf("Getting connects for address 0x%x but am at 0x%x\n", address, chip->address);
+  }
+
+  // a new connection, reset port count
+  chip->i2c_portcount = 0;
+
+  if (read)
+  {
+    printf("Read: reset INT flag\n");
+    chip->lastReadValue = chip->inputValue;
+    interruptFlagOff(chip);
+  }
+
+  return true; // true means ACK, false NACK
+}
+
+uint8_t on_i2c_read(void *user_data)
+{
+  CHIPSTATE_FROM(user_data);
+  uint8_t retVal = (chip->inputValue >> (chip->i2c_portcount * 8)) & 0xff;
+
+  // next read will be next port
+  incrementPortCount(chip);
+  return retVal; // The byte to be returned to the microcontroller
+}
+
+bool on_i2c_write(void *user_data, uint8_t data)
+{
+  // `data` is the byte received from the microcontroller
+  CHIPSTATE_FROM(user_data);
+
+  if (!chip->i2c_portcount)
+  {
+    // we are getting bytes,
+    // and this is the first of the
+    // two (or multiple of 2) ports.
+    // so reset our input tracking mask
+    chip->inputMask = 0;
+  }
+
+  for (uint8_t i = 0; i < 8; i++)
+  {
+    // we want our 16-bit index, calculated from
+    // both the bit of this partiicular byte and accounting
+    // for if this is the first or second of the bytes written
+    uint8_t bitIdx = i + (chip->i2c_portcount * 8);
+
+    // shortcut to the i/o pin we're processing
+    pin_t targetPin = chip->io[bitIdx];
+
+    // disable any watch setup for this pin
+    pin_watch_stop(targetPin);
+
+    if (data & (1 << i))
+    {
+      // this is a High/read
+      // not it in inputMask, setup as input with pull-up and watch
+      chip->inputMask |= (1 << bitIdx);
+      pin_mode(targetPin, INPUT_PULLUP);
+      pin_watch(targetPin, &(chip->io_watch_config));
+    }
+    else
+    {
+      // configured as output, tied to GND LOW
+      pin_mode(targetPin, OUTPUT_LOW);
+    }
+
+    if (chip->i2c_portcount)
+    {
+      // we just got the lasr of a set of two bytes
+      printf("Input mask is now 0x%x\n", chip->inputMask);
     }
   }
+  incrementPortCount(chip);
+  return true; // true means ACK, false NACK
 }
 
-
-/*
- * Read all 16 physical pins.
- */
-static uint16_t read_pins(void)
+void on_i2c_disconnect(void *user_data)
 {
-  uint16_t value = 0;
+  // This method is optional. Useful if you need to know when the I2C transaction has concluded.
+}
 
-  for (int i = 0; i < 16; i++) {
+uint8_t read_address(chip_state_t *chip)
+{
+  uint8_t configuredAddress = I2C_BASE_ADDRESS;
+  uint8_t lsbits = 0;
 
-    if (pin_read(chip.pins[i]) == HIGH) {
-      value |= (1 << i);
+  for (uint8_t i = 0; i < NUM_ADDR_BITS; i++)
+  {
+    if (pin_read(chip->addressBits[i]))
+    {
+      lsbits |= (1 << i);
     }
   }
 
-  return value;
+  configuredAddress = configuredAddress | lsbits;
+  printf("Chip LSB bits set to %d. Address is 0x%02x\n", lsbits, configuredAddress);
+  return configuredAddress;
 }
 
-
 /*
- * I2C address received.
- */
-static bool on_i2c_connect(
-  void *user_data,
-  uint32_t address,
-  bool read
-)
+  Read the calue of the combined input pins, skipping over any that have been configured as output (LOW)
+*/
+uint16_t readInputsValue(chip_state_t *chip)
 {
-  (void)user_data;
-  (void)read;
-
-  chip.write_pos = 0;
-
-  if (address != PCF8575_ADDRESS) {
-    return false;
+  uint16_t inputsValue = 0;
+  for (uint8_t i = 0; i < NUM_GPIO; i++)
+  {
+    if (chip->inputMask & (1 << i))
+    {
+      // this is an input, we must read
+      if (pin_read(chip->io[i]))
+      {
+        inputsValue |= (1 << i);
+      }
+    }
   }
-
-  return true;
+  return inputsValue;
 }
 
-
-/*
- * ESP32 reads from PCF8575.
- *
- * PCF8575 sends:
- *
- * byte 0 = P0..P7
- * byte 1 = P8..P15
- */
-static uint8_t on_i2c_read(
-  void *user_data
-)
+void chip_input_io_change(void *user_data, pin_t pin, uint32_t value)
 {
-  (void)user_data;
+  CHIPSTATE_FROM(user_data);
 
-  static bool low_byte = true;
-
-  uint16_t value =
-    read_pins();
-
-  uint8_t result;
-
-  if (low_byte) {
-
-    result =
-      value & 0xFF;
-
-  } else {
-
-    result =
-      (value >> 8) & 0xFF;
+  chip->inputValue = readInputsValue(chip); // TODO
+  if (chip->inputValue != chip->lastReadValue)
+  {
+    interruptFlagOn(chip);
   }
-
-  low_byte = !low_byte;
-
-  printf(
-    "PCF8575 READ: 0x%04X\n",
-    value
-  );
-
-  return result;
-}
-
-
-/*
- * ESP32 writes to PCF8575.
- *
- * First byte:
- * P0..P7
- *
- * Second byte:
- * P8..P15
- */
-static bool on_i2c_write(
-  void *user_data,
-  uint8_t data
-)
-{
-  (void)user_data;
-
-  if (chip.write_pos == 0) {
-
-    chip.latch =
-      (chip.latch & 0xFF00) |
-      data;
-
-    chip.write_pos = 1;
-
-  } else {
-
-    chip.latch =
-      (chip.latch & 0x00FF) |
-      ((uint16_t)data << 8);
-
-    chip.write_pos = 0;
-
-    update_pins();
-
-    printf(
-      "PCF8575 WRITE: 0x%04X\n",
-      chip.latch
-    );
+  else
+  {
+    // off, immediately -- user may miss events
+    interruptFlagOff(chip);
   }
-
-  return true;
 }
 
-
-/*
- * End of I2C transaction.
- */
-static void on_i2c_disconnect(
-  void *user_data
-)
+void chip_addr_change(void *user_data, pin_t pin, uint32_t value)
 {
-  (void)user_data;
-
-  chip.write_pos = 0;
+  CHIPSTATE_FROM(user_data);
+  chip->address = read_address(chip);
+  // not really supported...
+  printf("Address changed dynamically -- unsupported (for now?)\n");
 }
 
-
-/*
- * Initialize chip.
- */
-void chip_init(void)
+void Initialize_state(chip_state_t *chip)
 {
-  /*
-   * Initial PCF8575 state:
-   *
-   * all pins HIGH/released.
-   */
-  chip.latch = 0xFFFF;
+  chip->address = I2C_BASE_ADDRESS;
+  chip->inputMask = 0xffff; // starts all high/input
+  chip->inputValue = 0xffff;
 
-  chip.write_pos = 0;
+  chip->i2c_portcount = 0;
 
-  /*
-   * Initialize P00-P15.
-   */
-  chip.pins[0] =
-    pin_init("P00", INPUT_PULLUP);
+  // io watch config, changes dynamically...
+  chip->io_watch_config.edge = BOTH;
+  chip->io_watch_config.pin_change = chip_input_io_change;
+  chip->io_watch_config.user_data = chip;
 
-  chip.pins[1] =
-    pin_init("P01", INPUT_PULLUP);
+  // i2c config
+  i2c_config_t *i2c = &(chip->i2c_config);
+  i2c->scl = pin_init("SCL", INPUT_PULLUP); // ahould we enforce external pull-ups
+  i2c->sda = pin_init("SDA", INPUT_PULLUP);
 
-  chip.pins[2] =
-    pin_init("P02", INPUT_PULLUP);
+  i2c->connect = on_i2c_connect;
+  i2c->read = on_i2c_read;
+  i2c->write = on_i2c_write;
+  i2c->disconnect = on_i2c_disconnect;
+  i2c->user_data = chip;
+}
 
-  chip.pins[3] =
-    pin_init("P03", INPUT_PULLUP);
+void chip_init()
+{
+  chip_state_t *chip = malloc(sizeof(chip_state_t));
 
-  chip.pins[4] =
-    pin_init("P04", INPUT_PULLUP);
+  // TODO: Initialize the chip, set up IO pins, create timers, etc.
+  const char *addrPinNames[] = {"A0", "A1", "A2"};
+  const char *ioPinNames[] = {
+      "P00", "P01", "P02", "P03", "P04", "P05", "P06", "P07",
+      "P10", "P11", "P12", "P13", "P14", "P15", "P16", "P17"};
 
-  chip.pins[5] =
-    pin_init("P05", INPUT_PULLUP);
+  // basic chip setup:
+  Initialize_state(chip);
+  chip->nINT = pin_init("nINT", INPUT);
 
-  chip.pins[6] =
-    pin_init("P06", INPUT_PULLUP);
-
-  chip.pins[7] =
-    pin_init("P07", INPUT_PULLUP);
-
-  chip.pins[8] =
-    pin_init("P10", INPUT_PULLUP);
-
-  chip.pins[9] =
-    pin_init("P11", INPUT_PULLUP);
-
-  chip.pins[10] =
-    pin_init("P12", INPUT_PULLUP);
-
-  chip.pins[11] =
-    pin_init("P13", INPUT_PULLUP);
-
-  chip.pins[12] =
-    pin_init("P14", INPUT_PULLUP);
-
-  chip.pins[13] =
-    pin_init("P15", INPUT_PULLUP);
-
-  chip.pins[14] =
-    pin_init("P16", INPUT_PULLUP);
-
-  chip.pins[15] =
-    pin_init("P17", INPUT_PULLUP);
-
-  /*
-   * Interrupt output.
-   *
-   * For now we initialize it HIGH.
-   */
-  chip.int_pin =
-    pin_init(
-      "INT",
-      OUTPUT_HIGH
-    );
-
-  /*
-   * I2C.
-   */
-  const i2c_config_t config = {
-
-    .address = PCF8575_ADDRESS,
-
-    .sda =
-      pin_init(
-        "SDA",
-        INPUT_PULLUP
-      ),
-
-    .scl =
-      pin_init(
-        "SCL",
-        INPUT_PULLUP
-      ),
-
-    .connect =
-      on_i2c_connect,
-
-    .read =
-      on_i2c_read,
-
-    .write =
-      on_i2c_write,
-
-    .disconnect =
-      on_i2c_disconnect,
-
-    .user_data = NULL
+  // address pins monitoring:
+  const pin_watch_config_t watch_addr_config = {
+      .edge = BOTH,
+      .pin_change = chip_addr_change,
+      .user_data = chip,
   };
+  for (uint8_t i = 0; i < NUM_ADDR_BITS; i++)
+  {
+    chip->addressBits[i] = pin_init(addrPinNames[i], INPUT);
+    pin_watch(chip->addressBits[i], &watch_addr_config);
+  }
 
-  chip.i2c =
-    i2c_init(&config);
+  // io...
+  for (uint8_t i = 0; i < NUM_GPIO; i++)
+  {
+    chip->io[i] = pin_init(ioPinNames[i], INPUT_PULLUP); // on power-up -- high/input pullup
+    pin_watch(chip->io[i], &(chip->io_watch_config));    // all watched
+  }
 
-  printf(
-    "PCF8575 initialized at address 0x%02X\n",
-    PCF8575_ADDRESS
-  );
+  chip->address = read_address(chip);
+  chip->i2c_config.address = chip->address;
+  chip->i2c_dev = i2c_init(&(chip->i2c_config));
+
+  printf("I2C initialized @ address 0x%x\n", chip->address);
+
+  // start with interrupt not asserted
+  interruptFlagOff(chip);
 }

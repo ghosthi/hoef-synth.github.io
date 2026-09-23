@@ -1,205 +1,120 @@
 #include "wokwi-api.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
-
-#define MCP4725_ADDRESS 0x62
-#define VREF 3.3f
 
 typedef struct
 {
+  pin_t vcc;
+  pin_t gnd;
+  pin_t sda;
+  pin_t scl;
   pin_t vout;
+
   i2c_dev_t i2c;
 
   uint16_t dac_value;
-
-  uint8_t buffer[2];
-  uint8_t buffer_pos;
 } chip_state_t;
 
-static chip_state_t chip;
-
-// ============================================================
-// Atualiza VOUT
-// ============================================================
-
-static void update_output(void)
+// Called when Arduino starts an I2C transaction
+bool on_i2c_connect(void *user_data, uint32_t address, bool read)
 {
-  float voltage =
-      ((float)chip.dac_value / 4095.0f) * VREF;
+  chip_state_t *chip = (chip_state_t *)user_data;
 
-  pin_dac_write(chip.vout, voltage);
-
-  printf(
-      "MCP4725: DAC=%u -> VOUT=%.3f V\n",
-      chip.dac_value,
-      voltage);
-}
-
-// ============================================================
-// I2C CONNECT
-// ============================================================
-
-static bool on_i2c_connect(
-    void *user_data,
-    uint32_t address,
-    bool read)
-{
-  (void)user_data;
-  (void)read;
-
-  chip.buffer_pos = 0;
-
-  if (address != MCP4725_ADDRESS)
-  {
-    return false;
-  }
+  printf("MCP4725: I2C connected, address=0x%02X, read=%d\n",
+         address, read);
 
   return true;
 }
 
-// ============================================================
-// I2C WRITE
-// ============================================================
-
-static bool on_i2c_write(
-    void *user_data,
-    uint8_t data)
+// Arduino writes one byte to the MCP4725
+bool on_i2c_write(void *user_data, uint8_t data)
 {
-  (void)user_data;
+  chip_state_t *chip = (chip_state_t *)user_data;
 
-  if (chip.buffer_pos < 2)
+  static uint8_t byte_index = 0;
+  static uint8_t high_byte = 0;
+
+  if (byte_index == 0)
   {
-    chip.buffer[chip.buffer_pos++] = data;
-  }
-
-  /*
-   * Fast Write / Write DAC Register:
-   *
-   * Byte 0:
-   * 0100 D11 D10 D9 D8
-   *
-   * Byte 1:
-   * D7 ... D0
-   */
-
-  if (chip.buffer_pos == 2)
-  {
-
-    uint8_t command = chip.buffer[0];
-    uint8_t low = chip.buffer[1];
-
     /*
-     * 0x40 = Write DAC register
-     */
-    if ((command & 0xF0) == 0x40)
-    {
+       MCP4725 Fast Mode:
+       Byte 0:
+       D7..D4 = command/control bits
+       D3..D0 = upper DAC bits
+    */
 
-      uint16_t high =
-          command & 0x0F;
-
-      chip.dac_value =
-          (high << 8) | low;
-
-      chip.dac_value &= 0x0FFF;
-
-      update_output();
-    }
-
-    chip.buffer_pos = 0;
-  }
-
-  return true;
-}
-
-// ============================================================
-// I2C READ
-// ============================================================
-
-static uint8_t on_i2c_read(
-    void *user_data)
-{
-  (void)user_data;
-
-  static bool high_byte = true;
-
-  uint8_t result;
-
-  if (high_byte)
-  {
-    result =
-        (chip.dac_value >> 8) & 0x0F;
+    high_byte = data & 0x0F;
+    byte_index = 1;
   }
   else
   {
-    result =
-        chip.dac_value & 0xFF;
+    /*
+       Byte 1:
+       D7..D0 = lower DAC bits
+    */
+
+    chip->dac_value =
+        ((uint16_t)high_byte << 8) |
+        data;
+
+    // MCP4725 is 12-bit
+    chip->dac_value &= 0x0FFF;
+
+    // Convert 12-bit DAC value to 0–5 V
+    float voltage =
+        (5.0f * chip->dac_value) / 4095.0f;
+
+    // Output the virtual analog voltage
+    pin_dac_write(chip->vout, voltage);
+
+    printf("MCP4725: DAC=%u -> VOUT=%.3f V\n",
+           chip->dac_value,
+           voltage);
+
+    byte_index = 0;
   }
 
-  high_byte = !high_byte;
-
-  return result;
+  return true;
 }
 
-// ============================================================
-// I2C DISCONNECT
-// ============================================================
-
-static void on_i2c_disconnect(
-    void *user_data)
+void on_i2c_disconnect(void *user_data)
 {
-  (void)user_data;
-
-  chip.buffer_pos = 0;
+  // End of I2C transaction
 }
-
-// ============================================================
-// CHIP INIT
-// ============================================================
 
 void chip_init(void)
 {
-  /*
-   * VOUT
-   */
-  chip.vout =
-      pin_init("VOUT", ANALOG);
 
-  /*
-   * Valor inicial do DAC
-   */
-  chip.dac_value = 0;
-  chip.buffer_pos = 0;
+  chip_state_t *chip =
+      (chip_state_t *)malloc(sizeof(chip_state_t));
 
-  pin_dac_write(
-      chip.vout,
-      0.0f);
+  chip->dac_value = 0;
 
-  /*
-   * I2C
-   */
-  const i2c_config_t config = {
-      .address = MCP4725_ADDRESS,
+  // Initialize pins
+  chip->vcc = pin_init("VCC", INPUT);
+  chip->gnd = pin_init("GND", INPUT);
+  chip->sda = pin_init("SDA", INPUT);
+  chip->scl = pin_init("SCL", INPUT);
 
-      .sda = pin_init(
-          "SDA",
-          INPUT_PULLUP),
+  // VOUT is analog
+  chip->vout = pin_init("VOUT", ANALOG);
 
-      .scl = pin_init(
-          "SCL",
-          INPUT_PULLUP),
+  // Initial DAC output = 0 V
+  pin_dac_write(chip->vout, 0.0f);
 
+  // Configure I2C device
+  i2c_config_t config = {
+      .address = 0x62,
+      .scl = chip->scl,
+      .sda = chip->sda,
       .connect = on_i2c_connect,
-      .read = on_i2c_read,
+      .read = NULL,
       .write = on_i2c_write,
       .disconnect = on_i2c_disconnect,
+      .user_data = chip,
+  };
 
-      .user_data = NULL};
+  chip->i2c = i2c_init(&config);
 
-  chip.i2c =
-      i2c_init(&config);
-
-  printf(
-      "MCP4725 initialized at 0x%02X\n",
-      MCP4725_ADDRESS);
+  printf("MCP4725 virtual DAC initialized at I2C address 0x62\n");
 }
