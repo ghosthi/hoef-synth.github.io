@@ -4,3 +4,4 @@
 TFT_eSPI
 Adafruit MCP4725
 PCF8575
+rotaryDecoder8

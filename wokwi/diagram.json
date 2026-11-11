@@ -11,15 +11,6 @@
       "attrs": {}
     },
     {
-      "type": "chip-mcp4725",
-      "id": "chip1",
-      "top": 10.62,
-      "left": -168,
-      "attrs": {
-        "address": "0x62"
-      }
-    },
-    {
       "type": "chip-pcf8575-mux-20",
       "id": "chip2",
       "top": 77.82,
@@ -27,78 +18,6 @@
       "attrs": {
         "address": "0x20"
       }
-    },
-    {
-      "type": "chip-pcf8575-mux-21",
-      "id": "chip3",
-      "top": -219.78,
-      "left": -676.8,
-      "attrs": {
-        "address": "0x21"
-      }
-    },
-    {
-      "type": "wokwi-ky-040",
-      "id": "encoder1",
-      "top": -295.9,
-      "left": -884,
-      "attrs": {}
-    },
-    {
-      "type": "wokwi-ky-040",
-      "id": "encoder2",
-      "top": -209.5,
-      "left": -884,
-      "attrs": {}
-    },
-    {
-      "type": "wokwi-ky-040",
-      "id": "encoder3",
-      "top": -113.5,
-      "left": -884,
-      "attrs": {}
-    },
-    {
-      "type": "wokwi-ky-040",
-      "id": "encoder4",
-      "top": -27.1,
-      "left": -884,
-      "attrs": {}
-    },
-    {
-      "type": "wokwi-ky-040",
-      "id": "encoder5",
-      "top": -276.7,
-      "left": -490.4,
-      "attrs": {}
-    },
-    {
-      "type": "wokwi-ky-040",
-      "id": "encoder6",
-      "top": 107.3,
-      "left": -1114.4,
-      "attrs": {}
-    },
-    {
-      "type": "wokwi-ky-040",
-      "id": "encoder7",
-      "top": 193.7,
-      "left": -1124,
-      "attrs": {}
-    },
-    {
-      "type": "wokwi-ky-040",
-      "id": "encoder8",
-      "top": 289.7,
-      "left": -1124,
-      "attrs": {}
-    },
-    {
-      "type": "wokwi-ky-040",
-      "id": "encoder9",
-      "top": 395.3,
-      "left": -1114.4,
-      "attrs": {}
     },
     {
       "type": "wokwi-gnd",
@@ -137,13 +56,6 @@
       "id": "gnd3",
       "top": 182.4,
       "left": 37.8,
-      "attrs": {}
-    },
-    {
-      "type": "wokwi-ili9341",
-      "id": "lcd1",
-      "top": -181.6,
-      "left": 412.5,
       "attrs": {}
     }
   ],

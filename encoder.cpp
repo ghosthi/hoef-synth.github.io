@@ -1,0 +1,56 @@
+#include "rotaryDecoder8.h"
+
+#define MIN_VALUE 0
+#define MAX_VALUE 60
+#define INTERRUPT_PIN 34
+
+rotaryDecoder8 decoder(0x20);
+
+volatile bool newTickFlag = false;
+
+void moved()
+{
+  const int IRQ_PULSES_PER_TICK = 1;
+  static int count = 0;
+  count++;
+  if (count == IRQ_PULSES_PER_TICK)
+  {
+    count = 0;
+    newTickFlag = true;
+  }
+}
+
+void mux_encoder_setup()
+{
+  pinMode(INTERRUPT_PIN, INPUT);   // GPIO34 não tem pull-up interno
+  attachInterrupt(digitalPinToInterrupt(INTERRUPT_PIN), moved, FALLING);
+  newTickFlag = false;
+
+  Wire.begin();
+  Wire.setClock(100000);
+  decoder.begin(8);
+  decoder.readInitialState();
+  Serial.print("SETUP MUX OK\n");
+
+}
+
+bool mux_encoder_update()
+{
+  if (newTickFlag)
+  {
+    decoder.update();
+    newTickFlag = false;
+    return true;
+  }
+  return false;
+}
+
+int32_t mux_encoder_get_values(uint8_t i)
+{
+  int32_t val = constrain(
+      decoder.getValue(i),
+      (int32_t)MIN_VALUE,
+      (int32_t)MAX_VALUE);
+
+  return val;
+}

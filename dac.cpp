@@ -2,13 +2,12 @@
 #include <Wire.h>
 #include <Adafruit_MCP4725.h>
 #include <math.h>
-// resolução no define pode ter valores 5, 6, 7, 8 ou
-//      corresponde aos limites de valores 2^DAC_RESOLUTION
-#define DAC_RESOLUTION (8)
-#define MCP4725_MAX 4095
+
+#define DAC_RESOLUTION (12)
 #define MCP4725_VREF 5.0f
 
 Adafruit_MCP4725 dac;
+long MAX_VALUE = pow(2, DAC_RESOLUTION);
 
 void dac_setup(void)
 {
@@ -23,19 +22,19 @@ uint16_t volts_to_dac_output(float volts)
     // Limita a tensão à faixa do DAC
     volts = constrain(volts, 0.0f, MCP4725_VREF);
 
-    return (uint16_t)round((volts / MCP4725_VREF) * MCP4725_MAX);
+    return (uint16_t)round((volts / MCP4725_VREF) * MAX_VALUE);
 }
 
 void dac_output(float volts)
 {
     uint16_t valor = volts_to_dac_output(volts);
-    if (valor > pow(2, DAC_RESOLUTION))
+    if (valor > MAX_VALUE)
     {
-        Serial.print("Valor (");
-        Serial.print(valor);
-        Serial.print(") maior que o suportado para a resolucao de ");
-        Serial.print(DAC_RESOLUTION);
-        Serial.println("!");
+        Serial.printf(
+            "Valor limite estourado: valor=%u | max=%ld | volts=%f bits\n",
+            valor,
+            MAX_VALUE,
+            volts);
         valor = 0;
     }
     dac.setVoltage((uint16_t)valor, true);
