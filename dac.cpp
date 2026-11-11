@@ -2,6 +2,7 @@
 #include <Wire.h>
 #include <Adafruit_MCP4725.h>
 #include <math.h>
+#define DAC_ENABLED 0
 
 #define DAC_RESOLUTION (12)
 #define MCP4725_VREF 5.0f
@@ -13,6 +14,10 @@ extern SemaphoreHandle_t i2cMutex;
 
 void dac_setup(void)
 {
+    if (DAC_ENABLED == 0)
+    {
+        return;
+    }
     // MCP4725A1: 0x62 (default) ou 0x63 (ADDR pin vinculado to VCC)
     // MCP4725A0: 0x60 ou 0x61
     // MCP4725A2: 0x64 ou 0x65
@@ -29,6 +34,10 @@ uint16_t volts_to_dac_output(float volts)
 
 void dac_output(float volts)
 {
+    if (DAC_ENABLED == 0)
+    {
+        return;
+    }
     uint16_t valor = volts_to_dac_output(volts);
     if (valor > MAX_VALUE)
     {

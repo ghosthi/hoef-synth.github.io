@@ -14,6 +14,8 @@
 #include "lcd.h"
 #include "encoder.h"
 
+#define CLK_GATE_ENABLED 0
+
 const int DEBUG = 1;
 const int PIN_CLOCK = 26; // Clock
 const int PIN_GATE = 27;  // Gate
@@ -41,7 +43,7 @@ SemaphoreHandle_t i2cMutex;
 
 void outputClockGate()
 {
-  if (!output_flag)
+  if (!output_flag || CLK_GATE_ENABLED == 0)
   {
     return;
   }
@@ -176,10 +178,13 @@ void setup()
   dac_setup();
   encoder_click_setup();
 
-  pinMode(PIN_CLOCK, OUTPUT);
-  pinMode(PIN_GATE, OUTPUT);
-  digitalWrite(PIN_CLOCK, LOW);
-  digitalWrite(PIN_GATE, LOW);
+  if (CLK_GATE_ENABLED == 1)
+  {
+    pinMode(PIN_CLOCK, OUTPUT);
+    pinMode(PIN_GATE, OUTPUT);
+    digitalWrite(PIN_CLOCK, LOW);
+    digitalWrite(PIN_GATE, LOW);
+  }
 
   Serial.print("SETUP DONE\n");
 

@@ -3,6 +3,7 @@
 #define MIN_VALUE 0
 #define MAX_VALUE 60
 #define INTERRUPT_PIN 34
+#define MUX_STEPS_ENABLED 0
 
 rotaryDecoder8 decoder(0x20);
 
@@ -24,6 +25,10 @@ void moved()
 
 void mux_encoder_setup()
 {
+  if (MUX_STEPS_ENABLED == 0)
+  {
+    return;
+  }
   pinMode(INTERRUPT_PIN, INPUT); // GPIO34 não tem pull-up interno
   attachInterrupt(digitalPinToInterrupt(INTERRUPT_PIN), moved, FALLING);
   newTickFlag = false;
@@ -37,7 +42,7 @@ void mux_encoder_setup()
 
 bool mux_encoder_update()
 {
-  if (newTickFlag)
+  if (newTickFlag && MUX_STEPS_ENABLED == 1)
   {
     xSemaphoreTake(i2cMutex, portMAX_DELAY);
     decoder.update();

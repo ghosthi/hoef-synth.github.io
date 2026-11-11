@@ -3,6 +3,7 @@
 #define INTERRUPT_PIN 34
 #define MIN_BPM 60
 #define MAX_BPM 300
+#define MUX_BPM_CLICK_ENABLED 1
 
 rotaryDecoderClick rd(0x20); // endereço I2C do PCF8575
 
@@ -20,6 +21,10 @@ void changed()
 
 void encoder_click_setup()
 {
+    if (MUX_BPM_CLICK_ENABLED == 0)
+    {
+        return;
+    }
     if (!rd.begin(1, 2, 0xFFF8)) // A=P01, B=P02, botões P03..P17
     {
         Serial.println("PCF8575 nao encontrado");
@@ -30,6 +35,7 @@ void encoder_click_setup()
     rd.setActiveLow(true);  // botao liga o pino ao GND
     rd.setDebounce(5);      // ms
     rd.setStepsPerClick(4); // passos por detent do encoder
+    rd.setValue((int32_t)MIN_BPM);
 
     pinMode(INTERRUPT_PIN, INPUT);
     attachInterrupt(digitalPinToInterrupt(INTERRUPT_PIN), changed, FALLING);
@@ -37,7 +43,7 @@ void encoder_click_setup()
 
 bool encoder_click_update()
 {
-    if (newTickFlag)
+    if (newTickFlag && MUX_BPM_CLICK_ENABLED == 1)
     {
         rd.update();
         newTickFlag = false;
@@ -48,6 +54,10 @@ bool encoder_click_update()
 
 bool is_step_active(uint8_t i)
 {
+    if (MUX_BPM_CLICK_ENABLED == 0)
+    {
+        return true;
+    }
     if (i > 8 || i < 0)
     {
         Serial.print("\nValor do parametro i: ");
@@ -61,11 +71,24 @@ bool is_step_active(uint8_t i)
 
 bool is_bpm_active()
 {
+    if (MUX_BPM_CLICK_ENABLED == 0)
+    {
+        return false;
+    }
+    // pino 11 por:
+    //      pinos 1 e 2 - rotação;
+    //      pinos 3, 4, 5, 6, 7, 8, 9 e 10 - enable dos steps;
+    //      pinto 11 - enable do BPM
     return rd.isOn(11);
 }
 
 int32_t get_bpm_value()
 {
+    if (MUX_BPM_CLICK_ENABLED == 0)
+    {
+        return MIN_BPM;
+    }
+
     return constrain(
         rd.getValue(),
         (int32_t)MIN_BPM,
