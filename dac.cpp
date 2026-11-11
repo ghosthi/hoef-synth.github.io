@@ -8,6 +8,8 @@
 
 Adafruit_MCP4725 dac;
 long MAX_VALUE = pow(2, DAC_RESOLUTION);
+// criado no setup da main
+extern SemaphoreHandle_t i2cMutex;
 
 void dac_setup(void)
 {
@@ -37,5 +39,7 @@ void dac_output(float volts)
             volts);
         valor = 0;
     }
-    dac.setVoltage((uint16_t)valor, true);
+    xSemaphoreTake(i2cMutex, portMAX_DELAY);
+    dac.setVoltage(valor, false);
+    xSemaphoreGive(i2cMutex);
 }

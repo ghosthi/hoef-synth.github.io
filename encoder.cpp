@@ -7,6 +7,8 @@
 rotaryDecoder8 decoder(0x20);
 
 volatile bool newTickFlag = false;
+// criado no setup da main
+extern SemaphoreHandle_t i2cMutex;
 
 void moved()
 {
@@ -22,7 +24,7 @@ void moved()
 
 void mux_encoder_setup()
 {
-  pinMode(INTERRUPT_PIN, INPUT);   // GPIO34 não tem pull-up interno
+  pinMode(INTERRUPT_PIN, INPUT); // GPIO34 não tem pull-up interno
   attachInterrupt(digitalPinToInterrupt(INTERRUPT_PIN), moved, FALLING);
   newTickFlag = false;
 
@@ -31,14 +33,15 @@ void mux_encoder_setup()
   decoder.begin(8);
   decoder.readInitialState();
   Serial.print("SETUP MUX OK\n");
-
 }
 
 bool mux_encoder_update()
 {
   if (newTickFlag)
   {
+    xSemaphoreTake(i2cMutex, portMAX_DELAY);
     decoder.update();
+    xSemaphoreGive(i2cMutex);
     newTickFlag = false;
     return true;
   }
