@@ -88,6 +88,6 @@ Regula a amplitude do sinal elétrico/áudio recebido, permitindo aumento de amp
 
 ## 8. Esquemáticos de hardware e diagramas de software
 
-
+![diagramaSoftware](./Sw-diagram.drawio.pdf)
 
 ---
