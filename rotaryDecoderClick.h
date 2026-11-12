@@ -1,7 +1,7 @@
 #pragma once
 //
 //    FILE: rotaryDecoderClick.h
-// VERSION: 0.2.0
+// VERSION: 0.2.2
 // PURPOSE: Biblioteca Arduino para PCF8575:
 //          - 1 encoder rotativo (pinos A e B configuraveis)
 //          - cliques (botoes) nos demais pinos, com debounce e contadores
@@ -24,7 +24,7 @@
 #include "Arduino.h"
 #include "Wire.h"
 
-#define ROTARY_DECODER_CLICK_LIB_VERSION (F("0.2.0"))
+#define ROTARY_DECODER_CLICK_LIB_VERSION (F("0.2.2"))
 
 const uint8_t ROTDEC_CLICK_PINS = 16;
 const uint16_t ROTDEC_CLICK_DEFAULT_MASK = 0xFFF8; //  P03..P17
@@ -88,6 +88,11 @@ public:
   bool update();
   //  true se o valor bruto lido difere da ultima leitura (nao atualiza nada).
   bool checkChange();
+  //  true se algum botao mudou de nivel e ainda aguarda o debounce terminar.
+  //  Uso com a interrupcao INT do PCF8575 (que so dispara na mudanca):
+  //  continue chamando update() enquanto isDebouncing() for true,
+  //  senao o clique nunca e confirmado. Nao faz leitura I2C.
+  bool isDebouncing();
   //  le o estado atual sem gerar eventos (use apos begin()).
   uint16_t readInitialState();
 
@@ -110,11 +115,14 @@ public:
   //  cada clique (pressionamento confirmado) inverte o estado do switch.
   //  todos comecam em OFF. begin() nao altera o estado dos switches.
   bool isOn(uint8_t pin);               //  true = ON
+  uint8_t getSwitchValue(uint8_t pin);  //  1 = ON, 0 = OFF (igual a isOn, retorna numero)
   uint16_t getSwitchMask();             //  bit i = 1 => switch i esta ON
   bool setSwitch(uint8_t pin, bool on); //  forca ON/OFF (nao gera evento)
   bool toggleSwitch(uint8_t pin);       //  inverte por software (nao gera evento)
   void setSwitchMask(uint16_t mask);    //  define todos de uma vez (ex: restaurar da EEPROM)
-  void resetSwitches();                 //  todos OFF
+  //  todos OFF (padrao) ou, com on = true, todos ON (so os botoes em toggleMask).
+  //  use resetSwitches(true) apos begin() para iniciar tudo em ON.
+  void resetSwitches(bool on = false);
 
   //  eventos "travados": houve mudanca por clique fisico desde a ultima leitura?
   //  apos o evento, use isOn(pin) para saber se ficou ON ou OFF.

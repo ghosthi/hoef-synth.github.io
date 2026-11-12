@@ -78,7 +78,14 @@ void debug()
   Serial.print("Steps: ");
   for (int i = 0; i < 8; i++)
   {
-    Serial.print(output_steps[i]);
+    if (is_step_active(i))
+    {
+      Serial.print(output_steps[i]);
+    }
+    else
+    {
+      Serial.print("-");
+    }
     Serial.print(" ");
   }
   Serial.print("\n");
@@ -151,6 +158,7 @@ void input_task(void *pvParameters)
   while (true)
   {
     updated = mux_encoder_update();
+    encoder_click_update();
     if (updated)
     {
       update_steps_value();

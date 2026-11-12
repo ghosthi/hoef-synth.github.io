@@ -1,6 +1,6 @@
 //
 //    FILE: rotaryDecoderClick.cpp
-// VERSION: 0.2.0
+// VERSION: 0.2.2
 // PURPOSE: Biblioteca Arduino para PCF8575:
 //          1 encoder rotativo + cliques (botoes) nos demais pinos
 //    BASE: rotaryDecoder8 de Rob Tillaart
@@ -183,6 +183,11 @@ bool rotaryDecoderClick::checkChange()
   return (_lastValue != raw);
 }
 
+bool rotaryDecoderClick::isDebouncing()
+{
+  return (_candidate != _stable);
+}
+
 bool rotaryDecoderClick::update()
 {
   uint16_t raw = read16();
@@ -284,6 +289,11 @@ bool rotaryDecoderClick::isOn(uint8_t pin)
   return (_switchState & (1U << pin)) != 0;
 }
 
+uint8_t rotaryDecoderClick::getSwitchValue(uint8_t pin)
+{
+  return isOn(pin) ? 1 : 0;
+}
+
 uint16_t rotaryDecoderClick::getSwitchMask()
 {
   return _switchState;
@@ -319,9 +329,9 @@ void rotaryDecoderClick::setSwitchMask(uint16_t mask)
   _switchState = mask & _buttonMask;
 }
 
-void rotaryDecoderClick::resetSwitches()
+void rotaryDecoderClick::resetSwitches(bool on)
 {
-  _switchState = 0;
+  _switchState = on ? (_buttonMask & _toggleMask) : 0;
 }
 
 bool rotaryDecoderClick::wasSwitched(uint8_t pin)
