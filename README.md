@@ -84,4 +84,10 @@ Regula a amplitude do sinal elétrico/áudio recebido, permitindo aumento de amp
 - Ganho do amplificador operacional (TL072) em dB:
   Av(dB) = 20·log(V/V) *(conforme aplicado, resultando em ≈3,61dB / ≈1,515 vezes de amplificação)*
 
+
+
+## 8. Esquemáticos de hardware e diagramas de software
+
+
+
 ---
