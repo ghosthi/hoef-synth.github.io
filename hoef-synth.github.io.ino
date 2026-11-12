@@ -13,15 +13,9 @@
 #include "encoder_click.h"
 #include "lcd.h"
 #include "encoder.h"
-
-#define CLK_GATE_ENABLED 0
-
-const int DEBUG = 1;
-const int PIN_CLOCK = 26; // Clock
-const int PIN_GATE = 27;  // Gate
+#include "config.h"
 
 portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
-const int NUM_STEPS = 8;
 // shared data
 int32_t steps[NUM_STEPS] = {0};
 // output only data
@@ -168,8 +162,8 @@ void input_task(void *pvParameters)
 void setup()
 {
   Serial.begin(115200);
-  Wire.begin(21, 22);
-  Wire.setClock(400000);
+  Wire.begin(SDA_PIN, SCL_PIN);
+  Wire.setClock(I2C_CLOCK_FREQUENCY);
 
   i2cMutex = xSemaphoreCreateMutex();
 

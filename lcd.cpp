@@ -2,11 +2,16 @@
 #include "TFT_eSPI.h"
 #include <SPI.h>
 #include <Arduino.h>
+#include "config.h"
 
 TFT_eSPI tft = TFT_eSPI();
 
 void lcd_output(long steps[], int bpm, int num_steps)
 {
+    if (LCD_ENABLED == 0)
+    {
+        return;
+    }
     for (size_t i = 0; i < num_steps; i++)
     {
         tft.drawNumber(steps[0], 12 + (18 * i), 5, 2);
@@ -18,6 +23,10 @@ void lcd_output(long steps[], int bpm, int num_steps)
 
 void lcd_setup()
 {
+    if (LCD_ENABLED == 0)
+    {
+        return;
+    }
     tft.init();
     tft.setRotation(1);
     tft.fillScreen(0x188B);

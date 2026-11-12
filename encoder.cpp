@@ -1,11 +1,7 @@
 #include "rotaryDecoder8.h"
+#include "config.h"
 
-#define MIN_VALUE 0
-#define MAX_VALUE 60
-#define INTERRUPT_PIN 34
-#define MUX_STEPS_ENABLED 0
-
-rotaryDecoder8 decoder(0x20);
+rotaryDecoder8 decoder(MUX_STEP_I2C_ADDR);
 
 volatile bool newTickFlag = false;
 // criado no setup da main
@@ -29,12 +25,10 @@ void mux_encoder_setup()
   {
     return;
   }
-  pinMode(INTERRUPT_PIN, INPUT); // GPIO34 não tem pull-up interno
-  attachInterrupt(digitalPinToInterrupt(INTERRUPT_PIN), moved, FALLING);
+  pinMode(MUX_STEPS_INTERRUPT_PIN, INPUT); // GPIO34 não tem pull-up interno
+  attachInterrupt(digitalPinToInterrupt(MUX_STEPS_INTERRUPT_PIN), moved, FALLING);
   newTickFlag = false;
 
-  Wire.begin();
-  Wire.setClock(100000);
   decoder.begin(8);
   decoder.readInitialState();
   Serial.print("SETUP MUX OK\n");
@@ -57,8 +51,8 @@ int32_t mux_encoder_get_values(uint8_t i)
 {
   int32_t val = constrain(
       decoder.getValue(i),
-      (int32_t)MIN_VALUE,
-      (int32_t)MAX_VALUE);
+      (int32_t)STEP_MIN_VALUE,
+      (int32_t)STEP_MAX_VALUE);
 
   return val;
 }

@@ -1,11 +1,7 @@
 #include "rotaryDecoderClick.h"
+#include "config.h"
 
-#define INTERRUPT_PIN 34
-#define MIN_BPM 60
-#define MAX_BPM 300
-#define MUX_BPM_CLICK_ENABLED 1
-
-rotaryDecoderClick rd(0x20); // endereço I2C do PCF8575
+rotaryDecoderClick rd(MUX_BPM_CLICK_I2C_ADDR); // endereço I2C do PCF8575
 
 void changed()
 {
@@ -37,8 +33,8 @@ void encoder_click_setup()
     rd.setStepsPerClick(4); // passos por detent do encoder
     rd.setValue((int32_t)MIN_BPM);
 
-    pinMode(INTERRUPT_PIN, INPUT);
-    attachInterrupt(digitalPinToInterrupt(INTERRUPT_PIN), changed, FALLING);
+    pinMode(MUX_BPM_INTERRUPT_PIN, INPUT);
+    attachInterrupt(digitalPinToInterrupt(MUX_BPM_INTERRUPT_PIN), changed, FALLING);
 }
 
 bool encoder_click_update()
@@ -79,7 +75,7 @@ bool is_bpm_active()
     //      pinos 1 e 2 - rotação;
     //      pinos 3, 4, 5, 6, 7, 8, 9 e 10 - enable dos steps;
     //      pinto 11 - enable do BPM
-    return rd.isOn(11);
+    return rd.isOn(BPM_CLICK_PORT_NUMBER);
 }
 
 int32_t get_bpm_value()

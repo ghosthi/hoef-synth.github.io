@@ -2,10 +2,7 @@
 #include <Wire.h>
 #include <Adafruit_MCP4725.h>
 #include <math.h>
-#define DAC_ENABLED 0
-
-#define DAC_RESOLUTION (12)
-#define MCP4725_VREF 5.0f
+#include "config.h"
 
 Adafruit_MCP4725 dac;
 long MAX_VALUE = pow(2, DAC_RESOLUTION);
@@ -18,10 +15,7 @@ void dac_setup(void)
     {
         return;
     }
-    // MCP4725A1: 0x62 (default) ou 0x63 (ADDR pin vinculado to VCC)
-    // MCP4725A0: 0x60 ou 0x61
-    // MCP4725A2: 0x64 ou 0x65
-    dac.begin(0x62);
+    dac.begin(DAC_I2C_ADDR);
 }
 
 uint16_t volts_to_dac_output(float volts)
