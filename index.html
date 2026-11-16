@@ -248,7 +248,7 @@
   <h1 id="proposta-de-projeto-hoef-synth">Proposta de Projeto: HOEF
     Synth</h1>
   <hr />
-  <h2 id="o-que-é-o-projeto">1. O que é o projeto</h2>
+  <h2 id="o-projeto">1. O projeto</h2>
   <p>O HOEF Synth é um sintetizador modular no formato
     <strong>Eurorack</strong>, combinando módulos analógicos com um módulo
     digital construído em torno de um microcontrolador
@@ -289,12 +289,11 @@
     Projeto</h2>
   <p>O projeto é composto por 4 módulos principais:</p>
   <h3 id="sequencer-digital">4.1 Sequencer Digital</h3>
-  <p>Módulo construído com um microcontrolador <strong>ESP32
-      CP2102</strong>, 9 encoders rotativos e saídas padrão P2, além de uma
-    fonte de alimentação. - <strong>8 encoders</strong> controlam o nível de
-    tensão gerado a cada instante (correspondente a um semitom). - <strong>1
-      encoder</strong> controla o BPM (batidas por minuto) do sinal
-    gerado.</p>
+  <p>Módulo construído com um microcontrolador <strong>ESP32</strong>, 9
+    encoders rotativos e saídas padrão P2, além de uma fonte de alimentação.
+    - <strong>8 encoders</strong> controlam o nível de tensão gerado a cada
+    instante (correspondente a um semitom). - <strong>1 encoder</strong>
+    controla o BPM (batidas por minuto) do sinal gerado.</p>
   <p><strong>Saídas do Sequencer Digital:</strong> -
     <strong>Clock:</strong> onda quadrada periódica (alterna entre 3,3V e
     0V), com frequência proporcional ao BPM. - <strong>Gate:</strong> sinal
@@ -306,7 +305,9 @@
     12, convertido em um nível de tensão entre 0V e 3,3V pelo pino DAC. -
     Exemplo dado no relatório: um arpejo do acorde Am7 (lá, dó, mi, sol, lá,
     dó, mi, sol) representado pelo vetor [1, 4, 8, 11, 1, 4, 8, 11] geraria
-    as tensões 0,25V, 1V, 2V, 2,75V, 0,25V, 1V, 2V, 2,75V.
+    as tensões 0,25V, 1V, 2V, 2,75V, 0,25V, 1V, 2V, 2,75V. -
+    <strong>LCD:</strong> Visualização de formato da saída e step atual em
+    display LCD.
   </p>
   <p>Todas as saídas passam por um amplificador operacional
     <strong>TL072</strong>, que amplifica o sinal em aproximadamente 3,61dB
@@ -392,6 +393,21 @@
           de amplificação)</em></p>
     </li>
   </ul>
+  <h2 id="esquemáticos-de-hardware">8. Esquemáticos de hardware</h2>
+  <h3 id="vca">VCA</h3>
+  <p><img src="./diagramas/vca.png" /></p>
+  <h3 id="vcf">VCF</h3>
+  <p><img src="./diagramas/vcf.png" /></p>
+  <h3 id="vco">VCO</h3>
+  <p><img src="./diagramas/vco.png" /></p>
+  <h3 id="adsr">ADSR</h3>
+  <p><img src="./diagramas/adsr.png" /></p>
+  <h2 id="diagrama-de-software">9. Diagrama de Software</h2>
+  <h3 id="sequencer">Sequencer</h3>
+  <p><img src="./diagramas/sw.png" /></p>
+  <h3 id="código-do-sequencer">Código do Sequencer</h3>
+  <p><a href="https://github.com/ghosthi/hoef-synth.github.io/tree/desenv">Implementação
+      do Sequencer com ESP32</a></p>
   <hr />
 </body>
 

@@ -86,8 +86,33 @@ Regula a amplitude do sinal elétrico/áudio recebido, permitindo aumento de amp
 
 
 
-## 8. Esquemáticos de hardware e diagramas de software
+## 8. Esquemáticos de hardware
 
-![diagramaSoftware](./Sw-diagram.drawio.pdf)
+### VCA
+
+![](./diagramas/vca.png)
+
+### VCF
+
+![](./diagramas/vcf.png)
+
+### VCO
+
+![](./diagramas/vco.png)
+
+### ADSR
+
+![](./diagramas/adsr.png)
+
+## 9. Diagrama de Software
+
+### Sequencer
+
+![](./diagramas/sw.png)
+
+### Código do Sequencer
+
+[Implementação do Sequencer com ESP32](https://github.com/ghosthi/hoef-synth.github.io/tree/desenv)
+
 
 ---
